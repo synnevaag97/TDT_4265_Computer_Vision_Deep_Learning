@@ -16,8 +16,9 @@ def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray):
     assert targets.shape == outputs.shape,\
         f"Targets shape: {targets.shape}, outputs: {outputs.shape}"
 
-    cross_entropy = -1/targets.shape[0] * np.sum(targets * np.log(outputs))
-    return cross_entropy
+    Cn = - np.sum(targets*np.log(outputs), axis=1)
+    C = np.sum(Cn)/len(targets)
+    return C
 
 
 class SoftmaxModel:
@@ -41,10 +42,11 @@ class SoftmaxModel:
             y: output of model with shape [batch size, num_outputs]
         """
         # TODO implement this function (Task 3a)
-        matrix = np.exp(X.dot(self.w)) # Matrix given by the dot product between te weights and the matrix input X
-        sum = matrix.sum(axis=1) # This is the denominator of the Softmax function
-        return matrix / sum[:, None]
-
+        zk = X.dot(self.w)
+        zk_mark = np.sum(np.exp(zk),axis = 1)
+        pred_targets = (np.exp(zk).T/(zk_mark)).T
+        #print(pred_targets.shape)
+        return pred_targets
 
     def backward(self, X: np.ndarray, outputs: np.ndarray, targets: np.ndarray) -> None:
         """
@@ -58,13 +60,15 @@ class SoftmaxModel:
         # TODO implement this function (Task 3a)
         # To implement L2 regularization task (4b) you can get the lambda value in self.l2_reg_lambda 
         # which is defined in the constructor.
-
         assert targets.shape == outputs.shape,\
             f"Output shape: {outputs.shape}, targets: {targets.shape}"
-        self.grad = -np.transpose(X).dot(targets-outputs) + self.l2_reg_lambda*self.w
-        self.grad /= outputs.shape[0]
+        self.grad = np.zeros_like(self.w)
         assert self.grad.shape == self.w.shape,\
              f"Grad shape: {self.grad.shape}, w: {self.w.shape}"
+
+        # Number of classes and number of outputs are they not the same?
+        self.grad = (-X.T.dot(targets - outputs))/len(X)
+        #print(self.grad.shape)
 
     def zero_grad(self) -> None:
         self.grad = None
@@ -79,13 +83,10 @@ def one_hot_encode(Y: np.ndarray, num_classes: int):
         Y: shape [Num examples, num classes]
     """
     # TODO implement this function (Task 3a)
-    matrix = np.zeros((Y.shape[0],num_classes))
-    for i in range(Y.shape[0]):
-        matrix[i, Y[i]] = 1
-
-    Y = matrix
-    return Y
-
+    target_encode = np.zeros((len(Y),num_classes))
+    for i in range(len(Y)):
+        target_encode[i,Y[i]] = 1
+    return target_encode
 
 
 def gradient_approximation_test(model: SoftmaxModel, X: np.ndarray, Y: np.ndarray):
@@ -111,6 +112,8 @@ def gradient_approximation_test(model: SoftmaxModel, X: np.ndarray, Y: np.ndarra
             # Actual gradient
             logits = model.forward(X)
             model.backward(X, logits, Y)
+            #print(gradient_approximation)
+            #print(model.grad[i,j])
             difference = gradient_approximation - model.grad[i, j]
             assert abs(difference) <= epsilon**2,\
                 f"Calculated gradient is incorrect. " \
