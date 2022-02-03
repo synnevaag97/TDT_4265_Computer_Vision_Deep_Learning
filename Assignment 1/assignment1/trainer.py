@@ -94,7 +94,7 @@ class BaseTrainer:
                     # TODO (Task 2d): Implement early stopping here.
                     # You can access the validation loss in val_history["loss"]
                     
-                    
+                    """
                     if max_acc_val < accuracy_val:
                         max_acc_val = accuracy_val
                         counter = 0
@@ -102,7 +102,7 @@ class BaseTrainer:
                         print("Early stoppage")
                         return train_history, val_history
                     counter += 1
-                    
+                    """
 
                 
                 global_step += 1
