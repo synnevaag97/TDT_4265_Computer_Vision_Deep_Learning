@@ -39,7 +39,6 @@ def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray) -> float:
     for i in range(len(targets)):
         Cn += -(targets[i]*np.log(outputs[i])+(1-targets[i])*np.log(1-outputs[i]))
     C = 1/len(targets) * Cn
-    #print(C.shape)
     return C
 
 
@@ -62,7 +61,6 @@ class BinaryModel:
         y = np.zeros((len(X),1))
         for i in range(len(X)):
             y[i] = 1/(1+np.exp(-self.w.T.dot(X[i])))
-        #print(y.shape)
         return y
 
     def backward(self, X: np.ndarray, outputs: np.ndarray, targets: np.ndarray) -> None:
@@ -82,7 +80,6 @@ class BinaryModel:
             f"Grad shape: {self.grad.shape}, w: {self.w.shape}"
 
         self.grad = 1/len(targets)*( -X.T@(targets - outputs))
-        print(self.grad.shape)
 
     def zero_grad(self) -> None:
         self.grad = None
@@ -109,11 +106,7 @@ def gradient_approximation_test(model: BinaryModel, X: np.ndarray, Y: np.ndarray
         # Actual gradient
         logits = model.forward(X)
         model.backward(X, logits, Y)
-        #print(gradient_approximation)
-        #print(model.grad[i, 0])
-        #print(model.grad)
         difference = gradient_approximation - model.grad[i, 0]
-        #print(difference)
         assert abs(difference) <= epsilon**2,\
             f"Calculated gradient is incorrect. " \
             f"Approximation: {gradient_approximation}, actual gradient: {model.grad[i,0]}\n" \
