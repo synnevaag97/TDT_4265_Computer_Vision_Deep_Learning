@@ -13,9 +13,12 @@ def pre_process_images(X: np.ndarray):
     assert X.shape[1] == 784,\
         f"X.shape[1]: {X.shape[1]}, should be 784"
     # TODO implement this function (Task 2a)
+    np.set_printoptions(threshold=np.inf)
+
     """Normalize"""
-    X = X/255.0 # Now they are between 0 and 1. 
-    X = 2*X - 1 # Offset to be between -1 and 1
+
+    X = X/255.0 # Now they are between 0 and 1.
+    X= 2*X - 1 # Offset to be between -1 and 1
 
     """Bias trick"""
     ones = np.ones((len(X), 1)) # Array for ones.

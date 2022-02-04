@@ -18,6 +18,7 @@ def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray):
 
     Cn = - np.sum(targets*np.log(outputs), axis=1)
     C = np.sum(Cn)/len(targets)
+
     return C
 
 
@@ -45,7 +46,6 @@ class SoftmaxModel:
         zk = X.dot(self.w)
         zk_mark = np.sum(np.exp(zk),axis = 1)
         pred_targets = (np.exp(zk).T/(zk_mark)).T
-        #print(pred_targets.shape)
         return pred_targets
 
     def backward(self, X: np.ndarray, outputs: np.ndarray, targets: np.ndarray) -> None:
@@ -67,8 +67,7 @@ class SoftmaxModel:
              f"Grad shape: {self.grad.shape}, w: {self.w.shape}"
 
         # Number of classes and number of outputs are they not the same?
-        self.grad = (-X.T.dot(targets - outputs))/len(X)
-        #print(self.grad.shape)
+        self.grad = -np.transpose(X).dot(targets - outputs)/ outputs.shape[0] + self.l2_reg_lambda * self.w
 
     def zero_grad(self) -> None:
         self.grad = None
