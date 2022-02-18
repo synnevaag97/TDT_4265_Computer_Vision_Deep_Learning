@@ -26,6 +26,7 @@ files_to_include = {
     "task3a": [".py"],
     "trainer": [".py"],
     "utils": [".py"],
+    "Report": [".pdf"],
 }
 zipfile_path = "assignment_code.zip"
 print("-"*80)
