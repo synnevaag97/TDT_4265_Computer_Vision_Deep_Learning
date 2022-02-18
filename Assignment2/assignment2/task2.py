@@ -62,14 +62,12 @@ class SoftmaxTrainer(BaseTrainer):
         loss = cross_entropy_loss(Y_batch, target_pred)
 
         # Include gamma here:
-        if self.use_momentum:
-            self.model.ws[0] = self.model.ws[0] - self.learning_rate*self.previous_grads[0]
-            self.model.ws[1] = self.model.ws[1] - self.learning_rate*self.previous_grads[1]
-            self.previous_grads[0] = self.model.grads[0] + self.momentum_gamma*self.previous_grads[0]
-            self.previous_grads[1] = self.model.grads[1] + self.momentum_gamma*self.previous_grads[1]
-        else:
-            self.model.ws[0] = self.model.ws[0] - self.learning_rate*self.model.grads[0]
-            self.model.ws[1] = self.model.ws[1] - self.learning_rate*self.model.grads[1]
+        for i in range(len(self.model.grads)):
+            if self.use_momentum:
+                self.model.ws[i] = self.model.ws[i] - self.learning_rate*self.previous_grads[i]
+                self.previous_grads[i] = self.model.grads[i] + self.momentum_gamma*self.previous_grads[i]
+            else:
+                self.model.ws[i] = self.model.ws[i] - self.learning_rate*self.model.grads[i]
 
         return loss
 
@@ -100,7 +98,7 @@ if __name__ == "__main__":
     # hyperparameters DO NOT CHANGE IF NOT SPECIFIED IN ASSIGNMENT TEXT
     num_epochs = 50
     batch_size = 32
-    neurons_per_layer = [128, 10]
+    neurons_per_layer = [64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 10]
     momentum_gamma = .9  # Task 3 hyperparameter
     shuffle_data = True
 

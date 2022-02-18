@@ -63,12 +63,14 @@ class SoftmaxModel:
         # A hidden layer with 64 neurons and a output layer with 10 neurons.
         self.neurons_per_layer = neurons_per_layer
 
-        self.hidden_layer_output = None
+        self.hidden_layer_output = [None for i in range(len(self.neurons_per_layer)-1)]
 
         # Initialize the weights
         self.ws = []
         prev = self.I
-        input_neurons = [self.I, self.neurons_per_layer[0]]
+        input_neurons = [self.I]
+        for i in range(len(self.neurons_per_layer)):
+            input_neurons.append(self.neurons_per_layer[i])
         for size, size_input_neurons in zip(self.neurons_per_layer, input_neurons):
             w_shape = (prev, size)
             print("Initializing weight to shape:", w_shape)
@@ -81,6 +83,7 @@ class SoftmaxModel:
         #w1 = np.random.uniform(-1, 1, (785, 64))
         #w2 = np.random.uniform(-1, 1, (64, 10))
         self.grads = [None for i in range(len(self.ws))]
+        self.z = [None for i in range(len(self.ws)-1)]
 
     def forward(self, X: np.ndarray) -> np.ndarray:
         """
@@ -92,13 +95,17 @@ class SoftmaxModel:
         # TODO implement this function (Task 2b)
         # HINT: For performing the backward pass, you can save intermediate activations in variables in the forward pass.
         # such as self.hidden_layer_output = ...
-        zj = X.dot(self.ws[0])
-        if self.use_improved_sigmoid:
-            self.hidden_layer_output = 1.7159*np.tanh(2/3*zj) # Sigmoid as activation function. aka self.a_j
-        else:
-            self.hidden_layer_output = 1/(1+np.exp(-zj)) # Sigmoid as activation function. aka self.a_j
+        out = X
+        for i in range(len(self.neurons_per_layer)-1):
+            self.z[i] = out.dot(self.ws[i])
+            if self.use_improved_sigmoid:
+                self.hidden_layer_output[i] = 1.7159*np.tanh(2/3*self.z[i]) # Sigmoid as activation function. aka self.a_j
+                out = self.hidden_layer_output[i]
+            else:
+                self.hidden_layer_output[i] = 1/(1+np.exp(-self.z[i])) # Sigmoid as activation function. aka self.a_j
+                out = self.hidden_layer_output[i]
 
-        zk = self.hidden_layer_output.dot(self.ws[1])
+        zk = self.hidden_layer_output[-1].dot(self.ws[-1])
         zk_mark = np.sum(np.exp(zk),axis = 1) 
         pred_target = (np.exp(zk).T/(zk_mark)).T # Softmax as activation function. aka a_k
 
@@ -120,26 +127,27 @@ class SoftmaxModel:
         # A list of gradients.
         # For example, self.grads[0] will be the gradient for the first hidden layer
 
-        delta_k = -(targets - outputs)
-        self.grads[1] = self.hidden_layer_output.T.dot(delta_k)/self.hidden_layer_output.shape[0]
+        
+        delta_prev = -(targets - outputs)
 
+        for i in range(len(self.hidden_layer_output), 0, -1):
+            #print("In for loop")
+            self.grads[i] = self.hidden_layer_output[i-1].T.dot(delta_prev)/self.hidden_layer_output[i-1].shape[0]
+            #print(self.grads[i].shape)
 
-        zj = X.dot(self.ws[0])
-        if self.use_improved_sigmoid:
-            f_derivative = 1.7159*2/(3*np.cosh(2/3*zj)**2)
-        else:
-            f_derivative = (1/(1+np.exp(-zj)))*(1-(1/(1+np.exp(-zj))))
-        """
-        print(self.ws[1].shape)
-        print(delta_k.shape)
-        print((self.ws[1].dot(delta_k.T)).shape)
-        print(f_derivative.shape)
-        """
-        delta_j = f_derivative*(delta_k@self.ws[1].T)
-        #print(delta_j.shape)
+        #zj = X.dot(self.ws[0])
+            if self.use_improved_sigmoid:
+                f_derivative = 1.7159*2/(3*np.cosh(2/3*self.z[i-1])**2)
+            else:
+                f_derivative = (1/(1+np.exp(-self.z[i-1])))*(1-(1/(1+np.exp(-self.z[i-1]))))
 
+            delta_prev = f_derivative*(delta_prev@self.ws[i].T)
     
-        self.grads[0] = X.T.dot(delta_j)/X.shape[0]
+        self.grads[0] = X.T.dot(delta_prev)/X.shape[0]
+
+        #print(self.grads[0].shape)
+        #print(len(self.grads))
+        #print(self.grads)
 
         for grad, w in zip(self.grads, self.ws):
             assert grad.shape == w.shape,\
